@@ -1,5 +1,5 @@
 from __future__ import print_function
-from gmusicapi import Musicmanager
+from gmusicapi import Musicmanager, CallFailure
 from gmusicapi.protocol import musicmanager
 import subprocess
 import os
@@ -42,8 +42,18 @@ class StopThread(Thread):
         return self._stop_event.is_set()
 
 def enqueue_output(id, queue):
-    filename, audio = mm.download_song(id)
-    queue.put([filename, audio+'\0'])
+    retry = 3
+    while retry > 0:
+        try:
+            filename, audio = mm.download_song(id)
+            queue.put([filename, audio+'\0'])
+            break
+        except CallFailure:
+            song = random.choice(songs)
+            id = song['id']
+            retry -= 1
+    if retry == 0:
+        print("download fail, please restart the program")
 
 def time_elapse(total_sec):
     start_time = time.time()
