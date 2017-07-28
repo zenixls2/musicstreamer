@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from google_auth_oauthlib.flow import InstalledAppFlow
 import google_auth_httplib2
@@ -269,8 +270,7 @@ if __name__ == '__main__':
     client_secret = ""
     y = YoutubeMusic({"installed":{"client_id":client_id,"project_id":"youtubetest-174705","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://accounts.google.com/o/oauth2/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":client_secret,"redirect_uris":["urn:ietf:wg:oauth:2.0:oob","http://localhost"]}})
     url = y.getVideoUrlDirect('U3saIiAhWV8')
-    print url
+    print(url)
     result = requests.get(url, headers=HEADER)
-    print result.status_code
-
-    print len(result.content)
+    print(result.status_code)
+    print(len(result.content))
