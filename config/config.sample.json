@@ -1,0 +1,10 @@
+{
+	"youtube": [
+		//youtube data api credentials
+	],
+	"gmusic": [
+		{"oauth_path": "{path your oauth credential}"},
+		{"oauth_path": "{for your second credential}"},
+		...
+	]
+}
