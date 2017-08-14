@@ -126,6 +126,8 @@ class YoutubeMusic(object):
                 part='snippet', maxResults=50, mine=True).execute()
         result = {}
         for item in data.get('items', []):
+            if item.get('id') in self.config.get('blacklist', []):
+                continue
             snippet = item.get('snippet', {})
             result[item.get('id', '')] = [
                     snippet.get('title'), snippet.get('description')]
