@@ -122,32 +122,39 @@ class YoutubeMusic(object):
           ]
         }
         '''
-        data = self.service.playlists().list(
-                part='snippet', maxResults=50, mine=True).execute()
-        result = {}
-        for item in data.get('items', []):
-            if item.get('id') in self.config.get('blacklist', []):
-                continue
-            snippet = item.get('snippet', {})
-            result[item.get('id', '')] = [
-                    snippet.get('title'), snippet.get('description')]
-        return result
+        while True:
+            try:
+                data = self.service.playlists().list(
+                        part='snippet', maxResults=50, mine=True).execute()
+                result = {}
+                for item in data.get('items', []):
+                    if item.get('id') in self.config.get('blacklist', []):
+                        continue
+                    snippet = item.get('snippet', {})
+                    result[item.get('id', '')] = [
+                            snippet.get('title'), snippet.get('description')]
+                return result
+            except Exception as e:
+                print(e)
 
     def playlistSongs(self, id):
         nextPageToken = ""
         songs = {}
         while True:
-            data = self.service.playlistItems().list(
-                part='snippet', maxResults=50, playlistId=id,
-                pageToken=nextPageToken).execute()
+            try:
+                data = self.service.playlistItems().list(
+                    part='snippet', maxResults=50, playlistId=id,
+                    pageToken=nextPageToken).execute()
 
-            for i in data.get('items', []):
-                snippet = i.get('snippet', {})
-                videoId = snippet.get('resourceId', {}).get('videoId', '')
-                songs[videoId] = snippet.get('title', '')
-            nextPageToken = data.get('nextPageToken', '')
-            if nextPageToken == '':
-                break
+                for i in data.get('items', []):
+                    snippet = i.get('snippet', {})
+                    videoId = snippet.get('resourceId', {}).get('videoId', '')
+                    songs[videoId] = snippet.get('title', '')
+                nextPageToken = data.get('nextPageToken', '')
+                if nextPageToken == '':
+                    break
+            except Exception as e:
+                print(e)
         return songs
 
     # Deprecated
