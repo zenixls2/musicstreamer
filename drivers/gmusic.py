@@ -1,3 +1,4 @@
+from __future__ import print_function
 from gmusicapi import Musicmanager, CallFailure
 from gmusicapi.protocol import musicmanager
 import os
@@ -15,7 +16,7 @@ class Dummy(object):
 dummy = Dummy()
 
 class GoogleMusic(object):
-    def __init__(self, config):
+    def __init__(self, config, log=print):
         self.OAUTH_PATH = config.get('oauth_path', '/tmp/oauth.cred')
         self.mm = Musicmanager()
         if os.path.isfile(self.OAUTH_PATH):
@@ -30,11 +31,12 @@ class GoogleMusic(object):
         self.songs = self.mm.get_uploaded_songs()
         self.queue = Queue()
         self.thread = None
+        self.log = log
         self._enqueue_output()
 
     def _enqueue_output(self):
         song = random.choice(self.songs)
-        print("get song id" + song['id'])
+        self.log("get song id" + song['id'])
         retry = 3
         while retry > 0:
             try:
@@ -61,12 +63,12 @@ class GoogleMusic(object):
                 self.queue.put(output)
                 break
             except CallFailure:
-                print("call failure")
+                self.log("call failure")
                 song = random.choice(self.songs)
                 retry -= 1
 
         if retry == 0:
-            print("Google Music download fail, please restart the program")
+            self.log("Google Music download fail, please restart the program")
             self.queue.put({})
 
 

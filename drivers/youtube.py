@@ -30,7 +30,7 @@ HEADER = {'origin': 'https://www.youtube.com', 'referer': 'https://www.youtube.c
 
 
 class YoutubeMusic(object):
-    def __init__(self, config):
+    def __init__(self, config, log=print):
         self.config = config
         self.credential_dir = os.path.join(os.path.expanduser('.'),
                                            '.credential')
@@ -47,6 +47,7 @@ class YoutubeMusic(object):
         random.seed()
         self.thread = None
         self.queue = Queue()
+        self.log = log
         self._enqueue_output()
 
     def get_credentials(self):
@@ -135,7 +136,7 @@ class YoutubeMusic(object):
                             snippet.get('title'), snippet.get('description')]
                 return result
             except Exception as e:
-                print(e)
+                self.log(e)
 
     def playlistSongs(self, id):
         nextPageToken = ""
@@ -154,7 +155,7 @@ class YoutubeMusic(object):
                 if nextPageToken == '':
                     break
             except Exception as e:
-                print(e)
+                self.log(e)
         return songs
 
     # Deprecated
@@ -162,10 +163,10 @@ class YoutubeMusic(object):
         vinfo = requests.get('http://www.youtube.com/get_video_info?video_id='+vid)
         params = parse_qs(vinfo.content)
         signature = parse_qs(params['probe_url'][0])['signature'][0]
-        print(params['title'][0])
-        print(params['length_seconds'][0])
-        print(params['author'][0])
-        print(params.keys())
+        self.log(params['title'][0])
+        self.log(params['length_seconds'][0])
+        self.log(params['author'][0])
+        self.log(params.keys())
 
         stream_map = params.get('adaptive_fmts', [''])[0] + ',' + params.get('url_encoded_fmt_stream_map', [''])[0]
         if 'rtmpe%3Dyes' in stream_map:
@@ -203,7 +204,7 @@ class YoutubeMusic(object):
         # only get audio format, but usually in bad quality...
         video = pafy.new('https://www.youtube.com/watch?v=%s' % vid)
         bestaudio = video.getbestaudio()
-        print(bestaudio.bitrate)
+        self.log(bestaudio.bitrate)
         return bestaudio.url, bestaudio.extension, bestaudio.length
 
 
@@ -217,34 +218,34 @@ class YoutubeMusic(object):
             if not self.cache_song_list.get(pid, None):
                 self.cache_song_list[pid] = self.playlistSongs(pid)
 
-            print("select playlist:", pid, self.cache_play_list[pid][0]);
+            self.log("select playlist:", pid, self.cache_play_list[pid][0]);
             if not self.cache_song_list.get(pid):
                 print("select fail")
                 self.cache_play_list.pop(pid)
                 retry += 1
                 continue
             vid = random.choice(self.cache_song_list[pid].keys())
-            print("downloading https://www.youtube.com/watch?v="+vid)
+            self.log("downloading https://www.youtube.com/watch?v="+vid)
             url = None
             ext = ''
             length = 0
             try:
                 url, ext, length = self.getVideoUrlDirect(vid)
             except Exception as e:
-                print(vid + ' exract fail')
+                self.log(vid + ' exract fail')
                 try:
-                    print(e)
+                    self.log(e)
                 except:
                     pass
                 self.cache_song_list[pid].pop(vid)
                 retry += 1
                 continue
             if not url:
-                print(vid + "'s video info get fail")
+                self.log(vid + "'s video info get fail")
                 continue
             result = requests.get(url, headers=HEADER)
             if result.status_code != 200:
-                print("fail to download video")
+                self.log("fail to download video")
                 continue
             video = result.content
             filelike = StringIO.StringIO(video)
@@ -259,7 +260,7 @@ class YoutubeMusic(object):
             self.queue.put(output)
             break
         if retry == 0:
-            print("Youtube download fail, please restart the program")
+            self.log("Youtube download fail, please restart the program")
             self.queue.put({})
 
 
