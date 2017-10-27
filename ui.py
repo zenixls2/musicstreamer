@@ -41,9 +41,9 @@ class PlayerModel(object):
         output = adaptor.get()
         if not output:
             return empty_response
-        ps = subprocess.Popen(('ffplay', '-autoexit', '-loglevel', 'panic',
+        self.ps = subprocess.Popen(('ffplay', '-autoexit', '-loglevel', 'panic',
                                '-nodisp', '-vn', '-'), stdin=subprocess.PIPE)
-        self._player = StoppableThread(target=ps.communicate,
+        self._player = StoppableThread(target=self.ps.communicate,
                                  kwargs={"input": output.get("audio")})
         self._player.daemon = True
         self._player.start()
@@ -56,19 +56,11 @@ class PlayerModel(object):
             "message": self._log
         }
 
-def check_stopped(frame, model):
-    def inner():
-        if not model._player or model._player.isAlive():
-            return
-        frame.update()
-    return inner
-
 class PlayerView(Frame):
     def __init__(self, screen, model):
         super(PlayerView, self).__init__(screen,
                                          screen.height - 3,
                                          screen.width - 3,
-                                         #on_load=check_stopped(self, model),
                                          hover_focus=True, title="Music Player")
         self._model = model
         layout = Layout([100], fill_frame=True)
@@ -80,14 +72,17 @@ class PlayerView(Frame):
         layout.add_widget(Text("Song size", "song_size"))
         layout.add_widget(TextBox(Widget.FILL_FRAME,
             "System Message:", "message", as_string=True))
-        layout = Layout([1, 1])
+        layout = Layout([1, 1, 1, 1])
         self.add_layout(layout)
-        layout.add_widget(Button("Next", self._next))
-        layout.add_widget(Button("Quit", self._quit))
+        layout.add_widget(Button("Next", self._next), 1)
+        layout.add_widget(Button("Quit", self._quit), 2)
         self.fix()
 
-    @staticmethod
-    def _quit():
+    def _quit(self):
+        if self._model._player and self._model._player.isAlive():
+            self._model.ps.terminate()
+            self._model._player.stop()
+            self._model._player.join()
         raise StopApplication("User pressed quit")
 
     def reset(self):
@@ -98,6 +93,7 @@ class PlayerView(Frame):
 
     def _next(self):
         if self._model._player and self._model._player.isAlive():
+            self._model.ps.terminate()
             self._model._player.stop()
             self._model._player.join()
         self.data = self._model.get()
