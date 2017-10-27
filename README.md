@@ -67,4 +67,6 @@ source venv/bin/activate && python ui.py
 ```
 The Text-Mode UI supports song switch, and could resize according to the terminal size.
 
-[![asciicast](https://asciinema.org/a/144511.png | width=600)](https://asciinema.org/a/144511)
+<a href="https://asciinema.org/a/1445">
+  <img src="https://asciinema.org/a/144511.png" width="600px">
+</a>
