@@ -4,6 +4,7 @@ from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, NextScene, StopApplication
 from drivers.gmusic import GoogleMusic
 from drivers.youtube import YoutubeMusic
+from threading import Lock
 import subprocess
 from Queue import Queue, Empty
 from utils import StoppableThread, time_elapse
@@ -21,6 +22,8 @@ empty_response = {
 class PlayerModel(object):
     def __init__(self):
         self.adaptors = []
+        self.adaptor = None
+        self.adaptorLock = Lock()
         self._log = ""
         self._player = None
         config = json.load(open('./config/config.json'))
@@ -36,8 +39,19 @@ class PlayerModel(object):
         self._log += ' '.join(map(lambda a: unicode(a), args)) + "\n"
         self._log = '\n'.join(self._log.split('\n')[-10:])
 
+    def terminate(self):
+        self.adaptorLock.acquire()
+        if self.adaptor:
+            self.adaptor.thread.terminate()
+        self.ps.terminate()
+        self._player.terminate()
+        self.adaptorLock.release()
+
     def get(self):
         adaptor = random.choice(self.adaptors)
+        self.adaptorLock.acquire()
+        self.adaptor = adaptor
+        self.adaptorLock.release()
         output = adaptor.get()
         if not output:
             return empty_response
@@ -80,9 +94,7 @@ class PlayerView(Frame):
 
     def _quit(self):
         if self._model._player and self._model._player.isAlive():
-            self._model.ps.terminate()
-            self._model._player.stop()
-            self._model._player.join()
+            self._model.terminate()
         raise StopApplication("User pressed quit")
 
     def reset(self):
@@ -93,9 +105,7 @@ class PlayerView(Frame):
 
     def _next(self):
         if self._model._player and self._model._player.isAlive():
-            self._model.ps.terminate()
-            self._model._player.stop()
-            self._model._player.join()
+            self._model.terminate()
         self.data = self._model.get()
 
     def update(self, frame_no):

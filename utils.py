@@ -1,18 +1,20 @@
 from __future__ import print_function
-from threading import Thread, Event
+from threading import Thread
 import time, sys
-
+from ctypes import *
+pthread = None
+try:
+    pthread = cdll.LoadLibrary("libpthread.dylib")
+except OSError:
+    pthread = cdll.LoadLibrary("libpthread.so")
 
 class StoppableThread(Thread):
     def __init__(self, group=None, target=None, name=None, args=(), kwargs={}):
         super(StoppableThread, self).__init__(group, target, name, args, kwargs)
-        self._stop_event = Event()
 
-    def stop(self):
-        self._stop_event.set()
+    def terminate(self):
+        pthread.pthread_cancel(self.ident)
 
-    def stopped(self):
-        return self._stop_event.is_set()
 
 
 def fix_name(name, recommend='utf-8'):

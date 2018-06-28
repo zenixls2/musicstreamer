@@ -41,6 +41,11 @@ class GoogleMusic(object):
         while retry > 0:
             try:
                 filename, audio = self.mm.download_song(song['id'])
+                if len(audio) == 0:
+                    self.log("audio size 0")
+                    song = random.choice(self.songs)
+                    continue
+
                 filelike = StringIO.StringIO(audio)
                 metadata = mutagen.File(filelike)
                 output = {

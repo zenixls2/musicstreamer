@@ -12,7 +12,6 @@ from urlparse import parse_qsl, parse_qs
 import random
 from Queue import Queue, Empty
 import mutagen
-import StringIO
 import sys
 import re
 import pafy
@@ -248,7 +247,11 @@ class YoutubeMusic(object):
                 self.log("fail to download video")
                 continue
             video = result.content
-            filelike = StringIO.StringIO(video)
+            if len(video) == 0:
+                self.log(vid + ' download fail')
+                self.cache_song_list[pid].pop(vid)
+                retry += 1
+                continue
             output = {
                 'song_length': length,
                 'album': '',

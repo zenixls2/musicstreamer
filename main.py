@@ -31,12 +31,21 @@ if __name__ == '__main__':
         print("song size:", len(output.get('audio')))
         ps = subprocess.Popen(('ffplay', '-autoexit', '-loglevel', 'panic',
             '-nodisp', '-vn', '-'), stdin=subprocess.PIPE)
+        player = StoppableThread(target=ps.communicate,
+                    kwargs={"input": output.get("audio")})
+        player.daemon = True
 
         timer = StoppableThread(target=time_elapse,
                                 args=(output.get('song_length', 0), ))
         timer.daemon = True
         timer.start()
-        print(ps.communicate(input=output.get('audio')))
-        timer.stop()
-        timer.join()
+        player.start()
+        try:
+            player.join()
+        except:
+            adaptor.thread.terminate()
+            player.terminate()
+            timer.terminate()
+            break
+        timer.terminate()
 

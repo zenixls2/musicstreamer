@@ -16,7 +16,7 @@ that does shuffling on the playlist.
 brew install ffmpeg --with-sdl2
 virtualenv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -U -r requirements.txt
 echo '{"gmusic": [{}]}' > config/config.json
 python main.py
 ```
