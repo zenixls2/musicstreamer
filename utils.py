@@ -6,7 +6,7 @@ pthread = None
 try:
     pthread = cdll.LoadLibrary("libpthread.dylib")
 except OSError:
-    pthread = cdll.LoadLibrary("libpthread.so")
+    pthread = cdll.LoadLibrary(util.find_library("pthread"))
 
 class StoppableThread(Thread):
     def __init__(self, group=None, target=None, name=None, args=(), kwargs={}):
